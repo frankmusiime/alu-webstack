@@ -3,7 +3,6 @@
 # Usage: ./audit_dns.sh example.com [subdomain]
 
 echo "#student.lb-01"  # Required for validation
-
 get_record_info() {
     local domain=$1
     local sub=$2
