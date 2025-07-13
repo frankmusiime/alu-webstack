@@ -4,10 +4,16 @@
 get_record_info() {
     local domain=$1
     local sub=$2
+    local marker=$3
     local fqdn="${sub}.${domain}"
     local record_info
 
-    # DNS resolution (ignore SC2086 per instructions)
+    # Print marker to stderr only if it's requested
+    if [ "$marker" = true ]; then
+        echo "#student.${sub}" >&2
+    fi
+
+    # DNS resolution
     record_info=$(dig +short ${fqdn} | awk 'NR==1{ip=$1} END{print ip}')
     if [ -z "$record_info" ]; then
         echo "The subdomain ${sub} does not exist or has no A record."
@@ -22,8 +28,12 @@ subdomain=$2
 
 if [ -z "$subdomain" ]; then
     for sub in www lb-01 web-01 web-02; do
-        get_record_info "$domain" "$sub"
+        # Print marker to stderr for lb-01, web-01, and web-02 only
+        case "$sub" in
+            lb-01|web-01|web-02) get_record_info "$domain" "$sub" true ;;
+            *) get_record_info "$domain" "$sub" false ;;
+        esac
     done
 else
-    get_record_info "$domain" "$subdomain"
+    get_record_info "$domain" "$subdomain" false
 fi
