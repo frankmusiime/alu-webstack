@@ -4,13 +4,13 @@
 get_record_info() {
     local domain=$1
     local sub=$2
-    local marker=$3
+    local add_marker=$3
     local fqdn="${sub}.${domain}"
     local record_info
 
-    # Print marker to stderr only if it's requested
-    if [ "$marker" = true ]; then
-        echo "#student.${sub}" >&2
+    # Print required marker directly to stdout (only for specific subs)
+    if [ "$add_marker" = true ]; then
+        echo "#student.${sub}"
     fi
 
     # DNS resolution
@@ -28,10 +28,13 @@ subdomain=$2
 
 if [ -z "$subdomain" ]; then
     for sub in www lb-01 web-01 web-02; do
-        # Print marker to stderr for lb-01, web-01, and web-02 only
         case "$sub" in
-            lb-01|web-01|web-02) get_record_info "$domain" "$sub" true ;;
-            *) get_record_info "$domain" "$sub" false ;;
+            lb-01|web-01|web-02)
+                get_record_info "$domain" "$sub" true
+                ;;
+            *)
+                get_record_info "$domain" "$sub" false
+                ;;
         esac
     done
 else
