@@ -1,23 +1,20 @@
 #!/usr/bin/env bash
 # Description: Audit subdomain DNS records for a given domain
 
-# Function: print DNS info, optionally print #student marker
 get_record_info() {
     local domain=$1
     local sub=$2
-    local print_marker=$3
+    local show_marker=$3
     local fqdn="${sub}.${domain}"
     local record_info
 
-    # Get IP for subdomain
-    record_info=$(dig +short ${fqdn} | awk 'NR==1{ip=$1} END{print ip}')
-    
-    # Print marker if requested (only for lb-01, web-01, web-02 when no subdomain specified)
-    if [ "$print_marker" = true ]; then
+    # Only print the marker comment when auditing all subdomains
+    if [ "$show_marker" = true ]; then
         echo "#student.${sub}"
     fi
 
-    # Print DNS info or error if no record found
+    # DNS resolution (ignore SC2086 per requirements)
+    record_info=$(dig +short ${fqdn} | awk 'NR==1{ip=$1} END{print ip}')
     if [ -z "$record_info" ]; then
         echo "The subdomain ${sub} does not exist or has no A record."
     else
@@ -25,28 +22,14 @@ get_record_info() {
     fi
 }
 
-# Main script logic
+# Main
 domain=$1
 subdomain=$2
 
-if [ -z "$domain" ]; then
-    echo "Usage: $0 domain [subdomain]"
-    exit 1
-fi
-
 if [ -z "$subdomain" ]; then
-    # When no subdomain given, print all 4 in order, with markers only for lb-01, web-01, web-02
     for sub in www lb-01 web-01 web-02; do
-        case "$sub" in
-            lb-01|web-01|web-02)
-                get_record_info "$domain" "$sub" true
-                ;;
-            *)
-                get_record_info "$domain" "$sub" false
-                ;;
-        esac
+        get_record_info "$domain" "$sub" true
     done
 else
-    # When subdomain is specified, print only that info, no marker
     get_record_info "$domain" "$subdomain" false
 fi
